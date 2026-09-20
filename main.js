@@ -41,7 +41,7 @@ app.on('window-all-closed', () => {
 
 ipcMain.handle('select-folder', async () => {
   const r = await dialog.showOpenDialog(win, {
-    title: 'Choose a folder of MP3 files',
+    title: 'Choose a folder of audio files',
     properties: ['openDirectory'],
   });
   return r.canceled ? null : r.filePaths[0];
@@ -49,9 +49,9 @@ ipcMain.handle('select-folder', async () => {
 
 ipcMain.handle('select-file', async () => {
   const r = await dialog.showOpenDialog(win, {
-    title: 'Choose an MP3 file',
+    title: 'Choose an audio file',
     properties: ['openFile'],
-    filters: [{ name: 'MP3', extensions: ['mp3'] }],
+    filters: [{ name: 'Audio (MP3, WAV)', extensions: ['mp3', 'wav'] }],
   });
   return r.canceled ? null : r.filePaths[0];
 });

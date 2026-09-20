@@ -91,8 +91,30 @@ const ALL = { minSilenceMs: 500, thresholdDb: -35, paddingMs: 200, trimEndMs: 50
   const postLoud = await audio.analyzeLoudness(normOut);
   assert.ok(Math.abs(postLoud.integrated_lufs - (-16)) < 3, `post loudness ${postLoud.integrated_lufs}`);
 
+  // WAV support: scan finds .wav, cut preserves the WAV container
+  const wavSrc = path.join(tmp, 'voice.wav');
+  execFileSync('ffmpeg', [
+    '-y',
+    '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1',
+    '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono:duration=1',
+    '-f', 'lavfi', '-i', 'sine=frequency=880:duration=1',
+    '-filter_complex', '[0:a][1:a][2:a]concat=n=3:v=0:a=1[a]',
+    '-map', '[a]', '-c:a', 'pcm_s16le', wavSrc,
+  ], { stdio: 'ignore' });
+
+  const wavInfo = await audio.analyze(wavSrc, { minSilenceMs: 500, thresholdDb: -35, paddingMs: 200, trimEndMs: 0, mode: 'all' });
+  assert.strictEqual(wavInfo.silence_count, 1, `wav silences ${wavInfo.silence_count}`);
+
+  const wavOut = path.join(tmp, 'silence_removed', 'voice.wav');
+  const wavRes = await audio.processFile(wavSrc, wavOut, { minSilenceMs: 500, thresholdDb: -35, paddingMs: 200, trimEndMs: 0, mode: 'all' });
+  assert.strictEqual(wavRes.skipped, false, JSON.stringify(wavRes));
+  assert.ok(fs.existsSync(wavOut), 'wav output missing');
+  assert.strictEqual(fs.readFileSync(wavOut).subarray(0, 4).toString(), 'RIFF', 'output should be RIFF/WAV');
+  const wavOutInfo = await audio.analyze(wavOut, { minSilenceMs: 500, thresholdDb: -35, paddingMs: 200, trimEndMs: 0 });
+  assert.ok(Math.abs(wavOutInfo.duration_ms - 2400) <= 40, `wav out duration ${wavOutInfo.duration_ms}`);
+
   const scanRes = audio.scan(tmp);
-  assert.strictEqual(scanRes.files.length, 4, `scan files ${scanRes.files.length}`);
+  assert.strictEqual(scanRes.files.length, 5, `scan files ${scanRes.files.length}`);
 
   console.log('ALL PASS');
   fs.rmSync(tmp, { recursive: true, force: true });

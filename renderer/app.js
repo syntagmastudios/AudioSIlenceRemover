@@ -153,7 +153,7 @@ function hideProgress() {
 function renderList() {
   if (state.files.length === 0) {
     els.fileList.innerHTML =
-      `<div class="empty">Choose a folder to see its MP3 files here.</div>`;
+      `<div class="empty">Choose a folder to see its audio files here.</div>`;
     return;
   }
 
@@ -248,7 +248,7 @@ async function scan() {
     state.status = {};
     state.loudness = {};
     els.fileList.innerHTML = "";
-    log(`Found ${r.count} mp3 file(s).`);
+    log(`Found ${r.count} audio file(s).`);
     renderList();
     renderSummary();
   } catch (e) {

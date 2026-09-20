@@ -56,6 +56,16 @@ async function ffprobeBitrate(file) {
   return Number.isFinite(v) && v > 0 ? v : null;
 }
 
+function isWavFile(p) {
+  return /\.wav$/i.test(p);
+}
+
+function audioEncodeArgs(outPath, bitrate) {
+  // WAV -> PCM 16-bit (no bitrate); MP3 -> CBR at the source bitrate.
+  if (isWavFile(outPath)) return ['-c:a', 'pcm_s16le'];
+  return ['-b:a', `${Math.round(bitrate / 1000)}k`];
+}
+
 async function detectSilences(file, minSilenceMs, thresholdDb) {
   const minSec = (minSilenceMs / 1000).toFixed(3);
   const { stderr } = await run(ffmpeg(), [
@@ -180,7 +190,7 @@ async function processFile(file, outPath, opts = {}) {
   }
 
   if (overwrite && doBackup) {
-    const backupPath = file + '.orig.mp3';
+    const backupPath = file + '.orig' + path.extname(file);
     if (!fs.existsSync(backupPath)) fs.copyFileSync(file, backupPath);
   }
 
@@ -195,16 +205,17 @@ async function processFile(file, outPath, opts = {}) {
   });
   const filter = `${parts.join(';')};${labels.join('')}concat=n=${segs.length}:v=0:a=1[out]`;
 
-  const bitrate = (await ffprobeBitrate(file)) || 192000;
   // ffmpeg can't edit a file in-place, so render to a temp file then move it
-  // into place (this also keeps overwrite mode safe).
-  const tmpOut = `${outPath}.tmp-${process.pid}-${Date.now()}.mp3`;
+  // into place (this also keeps overwrite mode safe). Keep the container as
+  // the source: WAV stays PCM, MP3 re-encodes at the source bitrate.
+  const bitrate = isWavFile(outPath) ? null : ((await ffprobeBitrate(file)) || 192000);
+  const tmpOut = `${outPath}.tmp-${process.pid}-${Date.now()}${path.extname(outPath)}`;
   try {
     await run(ffmpeg(), [
       '-hide_banner', '-y', '-i', file,
       '-filter_complex', filter,
       '-map', '[out]',
-      '-b:a', `${Math.round(bitrate / 1000)}k`,
+      ...audioEncodeArgs(outPath, bitrate),
       tmpOut,
     ]);
     fs.copyFileSync(tmpOut, outPath);
@@ -268,7 +279,7 @@ async function normalizeLoudness(file, outPath, opts = {}) {
   if (m.input_i == null) throw new Error('loudnorm measurement failed');
 
   if (overwrite && doBackup) {
-    const backupPath = file + '.orig.mp3';
+    const backupPath = file + '.orig' + path.extname(file);
     if (!fs.existsSync(backupPath)) fs.copyFileSync(file, backupPath);
   }
   const dir = path.dirname(outPath);
@@ -276,12 +287,12 @@ async function normalizeLoudness(file, outPath, opts = {}) {
 
   // Pass 2 — apply.
   const applyFilter = `loudnorm=I=${targetI}:TP=${targetTP}:LRA=${lra}:measured_I=${m.input_i}:measured_TP=${m.input_tp}:measured_LRA=${m.input_lra}:measured_thresh=${m.input_thresh}:offset=${m.target_offset}:linear=true`;
-  const bitrate = (await ffprobeBitrate(file)) || 192000;
-  const tmpOut = `${outPath}.tmp-${process.pid}-${Date.now()}.mp3`;
+  const bitrate = isWavFile(outPath) ? null : ((await ffprobeBitrate(file)) || 192000);
+  const tmpOut = `${outPath}.tmp-${process.pid}-${Date.now()}${path.extname(outPath)}`;
   try {
     await run(ffmpeg(), [
       '-hide_banner', '-y', '-i', file, '-af', applyFilter,
-      '-b:a', `${Math.round(bitrate / 1000)}k`, tmpOut,
+      ...audioEncodeArgs(outPath, bitrate), tmpOut,
     ]);
     fs.copyFileSync(tmpOut, outPath);
   } finally {
@@ -313,7 +324,7 @@ function scan(folderPath) {
   const isDir = fs.statSync(root).isDirectory();
   const files = [];
   if (!isDir) {
-    if (/\.mp3$/i.test(root) && !/\.orig\.mp3$/i.test(root)) files.push(root);
+    if (/\.(mp3|wav)$/i.test(root) && !/\.orig\.(mp3|wav)$/i.test(root)) files.push(root);
   } else {
     walk(root, files);
   }
@@ -334,7 +345,7 @@ function walk(dir, acc) {
     if (entry.isDirectory()) {
       if (entry.name.toLowerCase() === 'silence_removed') continue;
       walk(path.join(dir, entry.name), acc);
-    } else if (entry.isFile() && /\.mp3$/i.test(entry.name) && !/\.orig\.mp3$/i.test(entry.name)) {
+    } else if (entry.isFile() && /\.(mp3|wav)$/i.test(entry.name) && !/\.orig\.(mp3|wav)$/i.test(entry.name)) {
       acc.push(path.join(dir, entry.name));
     }
   }

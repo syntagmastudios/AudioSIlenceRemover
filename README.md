@@ -1,7 +1,7 @@
 # MP3 Silence Remover
 
 A free, open-source desktop app for cleaning up text-to-speech audio — built
-for **ElevenLabs v3** output but useful for any MP3 with unwanted silence.
+for **ElevenLabs v3** output but useful for any MP3 or WAV with unwanted silence.
 
 It strips the **leading silence**, trims awkward **interior gaps**, removes the
 **loud trailing glitch** the v3 model sometimes leaves at the very end, and can
@@ -31,9 +31,9 @@ account — everything runs locally on your machine.
     (true peak **-1.5 dBTP**).
 - **Two output modes:**
   - **New folder** — writes to `<source>/silence_removed/`, originals untouched.
-  - **Overwrite** (default) — replaces originals, with an optional `.orig.mp3`
+  - **Overwrite** (default) — replaces originals, with an optional `.orig`
     backup checkbox.
-- Re-scanning skips `*.orig.mp3` backups and `silence_removed/` folders, so you
+- Re-scanning skips `*.orig.*` backups and `silence_removed/` folders, so you
   never double-process.
 
 ## Requirements
@@ -74,7 +74,7 @@ npm run dev
 ## Usage
 
 1. Click **Choose folder** (or **Choose file**).
-2. All found MP3s are listed and pre-selected. Uncheck any you want to skip.
+2. All found audio files are listed and pre-selected. Uncheck any you want to skip.
 3. Click **Analyze selected** — each file shows its duration, silence count,
    and removable time.
 4. Adjust settings if needed (see below).
@@ -125,7 +125,7 @@ on the target machine.
 │   ├── app.js           # UI logic
 │   └── style.css        # dark theme
 ├── test/
-│   └── audio.test.js    # Self-contained engine tests (generates synthetic MP3s)
+│   └── audio.test.js    # Self-contained engine tests (generates synthetic MP3/WAV)
 ├── copy-ffmpeg.bat/.sh  # Copy ffmpeg binaries into ./ffmpeg/
 ├── testdata/sample.mp3  # 4-second demo file (1s tone + 2s silence + 1s tone)
 └── package.json
@@ -137,7 +137,7 @@ on the target machine.
 npm test
 ```
 
-Runs `test/audio.test.js`, which generates synthetic MP3s on the fly and checks
+Runs `test/audio.test.js`, which generates synthetic MP3 and WAV files on the fly and checks
 silence detection, cut / overwrite / backup behaviour, edge mode, and loudness
 normalization. No network access, no fixtures to download.
 
