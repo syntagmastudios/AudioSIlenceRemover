@@ -16,7 +16,7 @@ function createWindow() {
     minHeight: 640,
     backgroundColor: '#0e1116',
     autoHideMenuBar: true,
-    title: 'MP3 Silence Remover',
+    title: 'Silence Remover + Normalization',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

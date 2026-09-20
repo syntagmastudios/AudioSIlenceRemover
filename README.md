@@ -1,4 +1,4 @@
-# MP3 Silence Remover
+# Silence Remover + Normalization
 
 A free, open-source desktop app for cleaning up text-to-speech audio — built
 for **ElevenLabs v3** output but useful for any MP3 or WAV with unwanted silence.

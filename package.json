@@ -1,7 +1,7 @@
 {
-  "name": "mp3-silence-remover",
+  "name": "silence-remover",
   "version": "1.0.0",
-  "description": "Detect and remove silences from MP3 files — Electron desktop app.",
+  "description": "Detect and remove silences, and normalize loudness — Electron desktop app.",
   "main": "main.js",
   "scripts": {
     "dev": "electron .",
@@ -11,8 +11,8 @@
   },
   "license": "MIT",
   "build": {
-    "appId": "com.hyperlog.mp3silenceremover",
-    "productName": "MP3 Silence Remover",
+    "appId": "com.hyperlog.silenceremover",
+    "productName": "Silence Remover + Normalization",
     "files": [
       "main.js",
       "preload.js",
