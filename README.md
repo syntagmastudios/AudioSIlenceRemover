@@ -15,6 +15,9 @@ account — everything runs locally on your machine.
 
 - **Native folder / file picker** — real OS dialogs, no typed paths.
 - **Recursive scan** of a folder tree (or pick a single file).
+- **MP3 and WAV support** — detect and cut silences in both formats. Output
+  keeps the source container: WAV stays lossless PCM, MP3 re-encodes at its
+  source bitrate.
 - **Three ElevenLabs-v3 cleanups in one pass:**
   - **Leading silence** — removed completely.
   - **Interior gaps** — trimmed, keeping a little padding so words don't clip.
