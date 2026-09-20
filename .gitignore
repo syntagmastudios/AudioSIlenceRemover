@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Bundled ffmpeg binaries (fetch via copy-ffmpeg.bat / copy-ffmpeg.sh)
+ffmpeg/
+
+# Python cache (legacy web tool)
+__pycache__/
+*.pyc
+
+# Generated audio
+*.orig.mp3
+silence_removed/
+
+# Logs / OS
+*.log
+.DS_Store
+Thumbs.db

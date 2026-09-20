@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MP3 Silence Remover</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>MP3 Silence Remover</h1>
+      <p>Detect and cut silent gaps from MP3 files &mdash; recursively.</p>
+    </div>
+    <span class="health" id="health">offline</span>
+  </header>
+
+  <main class="layout">
+    <aside class="panel settings">
+      <section>
+        <h2>1 · Source</h2>
+        <input type="text" id="folder" placeholder="E:\SVN\some\folder" spellcheck="false" />
+        <button id="scanBtn" class="btn primary wide">Scan folder</button>
+      </section>
+
+      <section>
+        <h2>2 · Silence settings</h2>
+
+        <div class="field">
+          <label for="minSilence">Min silence</label>
+          <div class="control">
+            <input type="number" id="minSilenceNum" min="0.1" max="10" step="0.1" value="0.5" />
+            <span class="unit">s</span>
+          </div>
+          <input type="range" id="minSilence" min="0.1" max="10" step="0.1" value="0.5" />
+        </div>
+
+        <div class="field">
+          <label for="thresh">Noise threshold</label>
+          <div class="control">
+            <input type="number" id="threshNum" min="-60" max="-10" step="1" value="-35" />
+            <span class="unit">dB</span>
+          </div>
+          <input type="range" id="thresh" min="-60" max="-10" step="1" value="-35" />
+        </div>
+
+        <div class="field">
+          <label for="padding">Keep padding</label>
+          <div class="control">
+            <input type="number" id="paddingNum" min="0" max="2" step="0.05" value="0.2" />
+            <span class="unit">s</span>
+          </div>
+          <input type="range" id="padding" min="0" max="2" step="0.05" value="0.2" />
+        </div>
+      </section>
+
+      <section>
+        <h2>3 · Output</h2>
+        <label class="radio">
+          <input type="radio" name="outmode" value="folder" checked />
+          <span>New folder <em>(<code>silence_removed</code>)</em></span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="outmode" value="overwrite" />
+          <span>Overwrite <em>(backs up to <code>.orig.mp3</code>)</em></span>
+        </label>
+        <input type="text" id="outputDir" placeholder="Custom output dir (optional)" spellcheck="false" />
+      </section>
+    </aside>
+
+    <section class="panel files">
+      <div class="files-head">
+        <div class="summary" id="summary">No files scanned yet.</div>
+        <div class="actions">
+          <button id="analyzeAllBtn" class="btn">Analyze all</button>
+          <button id="cutSelectedBtn" class="btn danger" disabled>Cut selected</button>
+        </div>
+      </div>
+
+      <div class="list-head">
+        <label class="check all">
+          <input type="checkbox" id="selectAll" />
+          <span>All</span>
+        </label>
+        <span class="col-name">File</span>
+        <span class="col-dur">Duration</span>
+        <span class="col-sil">Silences</span>
+        <span class="col-cut">Removable</span>
+        <span class="col-status">Status</span>
+      </div>
+
+      <div id="fileList" class="file-list"></div>
+      <div id="log" class="log"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "name": "mp3-silence-remover",
+  "version": "1.0.0",
+  "description": "Detect and remove silences from MP3 files — Electron desktop app.",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "test": "node test/audio.test.js"
+  },
+  "license": "MIT",
+  "build": {
+    "appId": "com.hyperlog.mp3silenceremover",
+    "productName": "MP3 Silence Remover",
+    "files": [
+      "main.js",
+      "preload.js",
+      "audio.js",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "ffmpeg",
+        "to": "ffmpeg",
+        "filter": [
+          "ffmpeg.exe",
+          "ffprobe.exe"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.4.3",
+    "electron-builder": "^26.15.3"
+  }
+}
