@@ -91,6 +91,16 @@ const ALL = { minSilenceMs: 500, thresholdDb: -35, paddingMs: 200, trimEndMs: 50
   const postLoud = await audio.analyzeLoudness(normOut);
   assert.ok(Math.abs(postLoud.integrated_lufs - (-16)) < 3, `post loudness ${postLoud.integrated_lufs}`);
 
+  // normalize in overwrite mode: saved back to the original file
+  const normOwSrc = path.join(tmp, 'normow.mp3');
+  fs.copyFileSync(src2, normOwSrc);
+  const beforeOw = await audio.analyzeLoudness(normOwSrc);
+  const normOwRes = await audio.normalizeLoudness(normOwSrc, normOwSrc, { overwrite: true, backup: true });
+  assert.strictEqual(normOwRes.skipped, false, JSON.stringify(normOwRes));
+  assert.ok(fs.existsSync(normOwSrc + '.orig.mp3'), 'normalize backup missing');
+  const afterOw = await audio.analyzeLoudness(normOwSrc);
+  assert.ok(afterOw.integrated_lufs > beforeOw.integrated_lufs, `normalize should raise loudness (${beforeOw.integrated_lufs} -> ${afterOw.integrated_lufs})`);
+
   // WAV support: scan finds .wav, cut preserves the WAV container
   const wavSrc = path.join(tmp, 'voice.wav');
   execFileSync('ffmpeg', [
@@ -114,7 +124,7 @@ const ALL = { minSilenceMs: 500, thresholdDb: -35, paddingMs: 200, trimEndMs: 50
   assert.ok(Math.abs(wavOutInfo.duration_ms - 2400) <= 40, `wav out duration ${wavOutInfo.duration_ms}`);
 
   const scanRes = audio.scan(tmp);
-  assert.strictEqual(scanRes.files.length, 5, `scan files ${scanRes.files.length}`);
+  assert.strictEqual(scanRes.files.length, 6, `scan files ${scanRes.files.length}`);
 
   console.log('ALL PASS');
   fs.rmSync(tmp, { recursive: true, force: true });

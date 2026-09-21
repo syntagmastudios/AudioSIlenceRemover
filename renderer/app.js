@@ -23,6 +23,7 @@ const els = {
   cutSelectedBtn: $("cutSelectedBtn"),
   analyzeVolBtn: $("analyzeVolBtn"),
   normalizeBtn: $("normalizeBtn"),
+  stopBtn: $("stopBtn"),
   progressWrap: $("progressWrap"),
   progressFill: $("progressFill"),
   progressLabel: $("progressLabel"),
@@ -39,6 +40,7 @@ const state = {
   status: {},
   loudness: {},
   busy: false,
+  stopRequested: false,
 };
 
 /* ---------- formatting ---------- */
@@ -148,6 +150,20 @@ function hideProgress() {
   els.progressWrap.hidden = true;
   els.progressFill.style.width = "0%";
   els.progressLabel.textContent = "";
+}
+
+function beginQueue() {
+  state.busy = true;
+  state.stopRequested = false;
+  els.stopBtn.disabled = false;
+}
+
+function endQueue() {
+  const wasStopped = state.stopRequested;
+  state.busy = false;
+  state.stopRequested = false;
+  els.stopBtn.disabled = true;
+  if (wasStopped) log("Stopped.", "warn");
 }
 
 function renderList() {
@@ -291,12 +307,13 @@ async function analyzeSelected() {
     log("No files selected.", "warn");
     return;
   }
-  state.busy = true;
+  beginQueue();
   els.analyzeAllBtn.disabled = true;
   els.analyzeAllBtn.textContent = "Analyzing…";
   let done = 0;
   setProgress(0, targets.length, `Analyzing 0 / ${targets.length}`);
   for (const f of targets) {
+    if (state.stopRequested) break;
     await analyzeOne(f);
     done++;
     setProgress(done, targets.length, `Analyzing ${done} / ${targets.length}`);
@@ -304,7 +321,7 @@ async function analyzeSelected() {
   hideProgress();
   els.analyzeAllBtn.disabled = false;
   els.analyzeAllBtn.textContent = "Analyze selected";
-  state.busy = false;
+  endQueue();
   updateCutBtn();
 }
 
@@ -321,7 +338,7 @@ async function cutSelected() {
   const overwrite = getOutputMode() === "overwrite";
   const outputDir = els.outputDir.value.trim();
 
-  state.busy = true;
+  beginQueue();
   els.cutSelectedBtn.disabled = true;
   els.cutSelectedBtn.textContent = "Cutting…";
   log(`Cutting ${targets.length} file(s) — mode: ${overwrite ? "overwrite" : "folder"}.`);
@@ -329,6 +346,7 @@ async function cutSelected() {
   let done = 0;
   setProgress(0, targets.length, `Cutting 0 / ${targets.length}`);
   for (const f of targets) {
+    if (state.stopRequested) break;
     try {
       const s = getSettings();
       const r = await bridge.process(f.path, {
@@ -359,7 +377,7 @@ async function cutSelected() {
 
   hideProgress();
   els.cutSelectedBtn.textContent = "Cut selected";
-  state.busy = false;
+  endQueue();
   updateCutBtn();
   renderSummary();
 }
@@ -371,12 +389,13 @@ async function analyzeVolume() {
     log("No files selected.", "warn");
     return;
   }
-  state.busy = true;
+  beginQueue();
   els.analyzeVolBtn.disabled = true;
   els.analyzeVolBtn.textContent = "Analyzing…";
   let done = 0;
   setProgress(0, targets.length, `Analyzing volume 0 / ${targets.length}`);
   for (const f of targets) {
+    if (state.stopRequested) break;
     try {
       const r = await bridge.analyzeVolume(f.path, {});
       if (r.integrated_lufs != null) {
@@ -395,7 +414,7 @@ async function analyzeVolume() {
   hideProgress();
   els.analyzeVolBtn.disabled = false;
   els.analyzeVolBtn.textContent = "Analyze volume";
-  state.busy = false;
+  endQueue();
 }
 
 async function normalizeSelected() {
@@ -407,13 +426,14 @@ async function normalizeSelected() {
   }
   const overwrite = getOutputMode() === "overwrite";
   const outputDir = els.outputDir.value.trim();
-  state.busy = true;
+  beginQueue();
   els.normalizeBtn.disabled = true;
   els.normalizeBtn.textContent = "Normalizing…";
   log(`Normalizing ${targets.length} file(s) to -16 LUFS — mode: ${overwrite ? "overwrite" : "folder"}.`);
   let done = 0;
   setProgress(0, targets.length, `Normalizing 0 / ${targets.length}`);
   for (const f of targets) {
+    if (state.stopRequested) break;
     try {
       const r = await bridge.normalize(f.path, {
         sourceRoot: state.root,
@@ -437,7 +457,7 @@ async function normalizeSelected() {
   hideProgress();
   els.normalizeBtn.disabled = false;
   els.normalizeBtn.textContent = "Normalize";
-  state.busy = false;
+  endQueue();
 }
 
 /* ---------- wiring ---------- */
@@ -449,6 +469,11 @@ els.analyzeAllBtn.addEventListener("click", analyzeSelected);
 els.cutSelectedBtn.addEventListener("click", cutSelected);
 els.analyzeVolBtn.addEventListener("click", analyzeVolume);
 els.normalizeBtn.addEventListener("click", normalizeSelected);
+els.stopBtn.addEventListener("click", () => {
+  state.stopRequested = true;
+  els.stopBtn.disabled = true;
+  log("Stopping after current file…", "warn");
+});
 els.folder.addEventListener("keydown", (e) => {
   if (e.key === "Enter") scan();
 });

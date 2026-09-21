@@ -26,7 +26,8 @@ account — everything runs locally on your machine.
   trailing) while preserving interior pauses.
 - **Per-file preview** — see duration, silence count, and removable time before
   you commit.
-- **Progress bar + "n / m" counter** on analyze, cut, and volume jobs.
+- **Progress bar + "n / m" counter** on analyze, cut, and volume jobs, with a
+  **Stop** button to halt the queue after the current file.
 - **Volume tools:**
   - **Analyze volume** — reports each file's integrated loudness (LUFS) and
     true peak.
